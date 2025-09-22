@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FOCAL — Enterprise AI Telemetry Platform</title>
+  <meta name="description" content="The infrastructure layer for AI observability. Focal provides real-time visibility into cost, performance, and usage across every AI provider." />
+  <link rel="icon" type="image/svg+xml" href="/assets/focal-favicon.svg" />
+  <meta property="og:title" content="FOCAL — Own Your AI Telemetry">
+  <meta property="og:description" content="Provider-neutral AI telemetry: cost, latency, and usage in one dashboard.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/assets/focal-favicon.svg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind config: set brand color
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#7C3AED', // purple-600-ish
+              600: '#7C3AED',
+              500: '#8B5CF6',
+              400: '#A78BFA'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    :root{ 
+      --card: rgba(255,255,255,0.02); 
+      --card-border: rgba(255,255,255,0.06); 
+      --accent: rgba(124,58,237,0.1);
+      --glow: rgba(124,58,237,0.3);
+    }
+    
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    
+    /* Sophisticated grid background */
+    .grid-bg{
+      background-image:
+        linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px),
+        radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+      background-size: 40px 40px, 40px 40px, 40px 40px;
+    }
+    
+    .card{
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      backdrop-filter: blur(20px);
+    }
+    
+    .card-elevated{
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 80px rgba(124,58,237,0.1);
+    }
+    
+    .shadow-soft{ box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    
+    .btn{
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.75rem 1.5rem; border-radius:8px; font-weight:600;
+      border:1px solid var(--card-border);
+      background: rgba(255,255,255,0.02);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.875rem;
+      letter-spacing: -0.025em;
+    }
+    
+    .btn-primary{ 
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%); 
+      border-color:#7C3AED; 
+      color:white; 
+      box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+    }
+    
+    .btn-secondary{
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+    }
+    
+    .btn:hover{ 
+      transform: translateY(-2px); 
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary:hover{
+      box-shadow: 0 8px 25px rgba(124,58,237,0.4);
+    }
+    
+    .metric-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent);
+    }
+    
+    .glow-text { 
+      background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .enterprise-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #a78bfa;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    
+    .kbd{ 
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace; 
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 0.125rem 0.25rem;
+      font-size: 0.75rem;
+    }
+    
+    @media (prefers-reduced-motion:no-preference){
+      .fade-in{ animation: fadein 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
+      .fade-in-delay{ animation: fadein 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both; }
+      .fade-in-delay-2{ animation: fadein 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both; }
+      
+      @keyframes fadein{ 
+        from{ opacity:0; transform:translateY(20px);} 
+        to{ opacity:1; transform:none;} 
+      }
+      
+      .float {
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+      }
+    }
+    
+    /* Professional number formatting */
+    .metric-number {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+  </style>
+</head>
+<body class="bg-[#0B0B0F] text-neutral-200 antialiased grid-bg">
+  <header class="sticky top-0 z-50 backdrop-blur-xl supports-[backdrop-filter]:bg-black/40 border-b border-white/5">
+    <div class="mx-auto max-w-7xl px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="#" class="flex items-center">
+          <img src="assets/logo.png" alt="Focal" class="h-32 w-auto">
+        </a>
+        <div class="enterprise-badge">AI Telemetry Platform</div>
+      </div>
+      <nav class="hidden lg:flex items-center gap-2">
+        <a class="btn" href="#platform">Platform</a>
+        <a class="btn" href="#enterprise">Enterprise</a>
+        <a class="btn" href="assets/Focal_One_Pager.pdf" target="_blank" rel="noopener">Overview</a>
+        <a class="btn btn-primary" href="https://calendly.com/focalllc/focal-demo" target="_blank" rel="noopener">Request Demo</a>
+      </nav>
+      <a class="lg:hidden btn btn-primary" href="https://calendly.com/focalllc/focal-demo">Demo</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="mx-auto max-w-7xl px-6 pt-20 md:pt-32 pb-16 fade-in">
+    <div class="text-center mb-16">
+      <div class="enterprise-badge mb-6">AI Telemetry Platform</div>
+      <h1 class="text-5xl md:text-7xl font-black glow-text leading-[0.9] tracking-tight mb-8">
+          Own Your AI Telemetry
+        </h1>
+      <p class="text-xl md:text-2xl text-neutral-300 max-w-4xl mx-auto leading-relaxed font-medium">
+        Consolidate cost, latency, and usage data from every AI provider into a single, auditable platform.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-12 items-center">
+      <div class="lg:col-span-5 fade-in-delay">
+        <div class="space-y-8">
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="metric-card">
+              <div class="text-2xl font-bold text-white metric-number">Multi</div>
+              <div class="text-sm text-neutral-400 mt-1">Provider Support</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-2xl font-bold text-white metric-number">Real-time</div>
+              <div class="text-sm text-neutral-400 mt-1">Monitoring</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-2xl font-bold text-white metric-number">Fast</div>
+              <div class="text-sm text-neutral-400 mt-1">Deploy</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-2xl font-bold text-white metric-number">MVP</div>
+              <div class="text-sm text-neutral-400 mt-1">Ready</div>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a class="btn btn-primary text-base py-4 px-8" href="https://calendly.com/focalllc/focal-demo" target="_blank" rel="noopener">
+              Book a Demo
+            </a>
+            <a class="btn btn-secondary text-base py-4 px-8" href="#platform">
+              View Features
+            </a>
+          </div>
+
+          <!-- Trust Indicators -->
+          <div class="text-sm text-neutral-500 space-y-2">
+            <div>✓ Provider-neutral • ✓ Fast to deploy • ✓ Built for AI workloads</div>
+            <div>✓ Early access available • ✓ Design partner program</div>
+        </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Screenshot -->
+      <div class="lg:col-span-7 fade-in-delay-2">
+        <div id="screenshot" class="card-elevated p-4 shadow-soft float">
+          <img src="assets/dashboard.png" alt="Focal Enterprise Dashboard - Real-time AI telemetry and cost monitoring" class="rounded-lg w-full h-auto">
+          <div class="px-4 py-3 text-center">
+            <div class="text-sm font-semibold text-neutral-300">Live Production Dashboard</div>
+            <div class="text-xs text-neutral-500 mt-1">Real-time metrics across 15+ AI providers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORM CAPABILITIES -->
+  <section id="platform" class="mx-auto max-w-7xl px-6 py-20 md:py-32">
+    <div class="text-center mb-20">
+      <h2 class="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
+        Comprehensive AI telemetry
+      </h2>
+      <p class="text-xl text-neutral-400 max-w-3xl mx-auto">
+        Monitor, optimize, and audit your AI stack from a single platform. Get visibility across all your AI providers.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 mb-16">
+      <div class="card p-8 space-y-6">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Real-Time Intelligence</h3>
+        <p class="text-neutral-300 leading-relaxed">
+          Track token usage, latency, and error rates across OpenAI, Anthropic, Azure, and more. Get real-time insights into your AI infrastructure performance.
+        </p>
+        <div class="space-y-2 text-sm text-neutral-400">
+          <div>• Real-time monitoring</div>
+          <div>• Multi-provider support</div>
+          <div>• Performance analytics</div>
+        </div>
+      </div>
+
+      <div class="card p-8 space-y-6">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Cost Optimization</h3>
+        <p class="text-neutral-300 leading-relaxed">
+          See spend by provider, model, team, and environment. Export CSV reports for finance and get automated cost alerts to stay within budget.
+        </p>
+        <div class="space-y-2 text-sm text-neutral-400">
+          <div>• Cost breakdown by provider</div>
+          <div>• Budget alerts</div>
+          <div>• Financial reporting</div>
+        </div>
+      </div>
+
+      <div class="card p-8 space-y-6">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Easy Integrations</h3>
+        <p class="text-neutral-300 leading-relaxed">
+          Simple connections to Datadog, Splunk, Snowflake, and other popular tools. Designed to work with your existing infrastructure.
+        </p>
+        <div class="space-y-2 text-sm text-neutral-400">
+          <div>• Popular tool integrations</div>
+          <div>• API-first design</div>
+          <div>• Flexible deployment</div>
+        </div>
+      </div>
+
+      <div class="card p-8 space-y-6">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Audit-Ready Reports</h3>
+        <p class="text-neutral-300 leading-relaxed">
+          Generate detailed reports for auditing and compliance needs. Export data in multiple formats for your security and finance teams.
+        </p>
+        <div class="space-y-2 text-sm text-neutral-400">
+          <div>• Detailed audit trails</div>
+          <div>• Multiple export formats</div>
+          <div>• Historical data retention</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY FOCAL -->
+  <section id="enterprise" class="mx-auto max-w-7xl px-6 py-20 md:py-32">
+    <div class="card-elevated p-12 md:p-16 text-center">
+      <h2 class="text-4xl md:text-5xl font-black text-white mb-8 tracking-tight">
+        Why Focal
+      </h2>
+      <p class="text-xl text-neutral-300 max-w-4xl mx-auto mb-12 leading-relaxed">
+        Get started quickly with AI telemetry that works across all your providers. Built for teams who need visibility without complexity.
+      </p>
+      
+      <div class="grid md:grid-cols-3 gap-8 text-left">
+        <div class="space-y-4">
+          <div class="text-3xl font-black text-white metric-number">Simple</div>
+          <div class="text-sm text-neutral-400 uppercase tracking-wider font-semibold">Setup</div>
+          <p class="text-neutral-300">Provider-agnostic and fast to deploy. No six-month integration projects.</p>
+        </div>
+        <div class="space-y-4">
+          <div class="text-3xl font-black text-white metric-number">Focused</div>
+          <div class="text-sm text-neutral-400 uppercase tracking-wider font-semibold">AI-First</div>
+          <p class="text-neutral-300">Built specifically for AI workloads, not generic infrastructure monitoring.</p>
+        </div>
+        <div class="space-y-4">
+          <div class="text-3xl font-black text-white metric-number">Early</div>
+          <div class="text-sm text-neutral-400 uppercase tracking-wider font-semibold">Access</div>
+          <p class="text-neutral-300">Join our design partner program and help shape the product roadmap.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESIGN PARTNER CTA -->
+  <section class="mx-auto max-w-7xl px-6 pb-32">
+    <div class="card-elevated p-12 md:p-16">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+          <h3 class="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight">
+            We're onboarding 3–5 design partners
+          </h3>
+          <p class="text-lg text-neutral-300 mb-8 leading-relaxed">
+            Join our early access program and help shape the future of AI telemetry. Design partners get free pilot access, direct input on the roadmap, and preferred pricing after launch.
+          </p>
+          <div class="space-y-4 text-sm text-neutral-400 mb-8">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Free pilot program during development</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Direct input on product roadmap</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Preferred pricing after launch</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Early access to new features</span>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <a class="btn btn-primary text-lg py-4 px-8 w-full justify-center" href="https://calendly.com/focalllc/focal-demo" target="_blank" rel="noopener">
+            Book a Demo
+          </a>
+          <a class="btn btn-secondary text-lg py-4 px-8 w-full justify-center" href="assets/Focal_One_Pager.pdf" target="_blank" rel="noopener">
+            Download One-Pager
+          </a>
+          <div class="text-center text-sm text-neutral-500">
+            Limited spots available for the design partner program.
+          </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-white/5 bg-black/20">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="grid md:grid-cols-4 gap-8 mb-12">
+        <div class="space-y-4">
+          <img src="assets/logo.png" alt="Focal" class="h-10 w-auto">
+          <p class="text-sm text-neutral-400 leading-relaxed">
+            Consolidate AI telemetry across providers. Built for teams who need visibility into their AI infrastructure.
+          </p>
+          <div class="enterprise-badge">MVP Ready</div>
+        </div>
+        
+        <div class="space-y-4">
+          <h4 class="text-sm font-semibold text-white uppercase tracking-wider">Platform</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <a href="#platform" class="block hover:text-white transition-colors">Capabilities</a>
+            <a href="#enterprise" class="block hover:text-white transition-colors">Enterprise</a>
+            <a href="assets/Focal_One_Pager.pdf" class="block hover:text-white transition-colors">Overview</a>
+            <a href="#" class="block hover:text-white transition-colors">Documentation</a>
+          </div>
+        </div>
+        
+        <div class="space-y-4">
+          <h4 class="text-sm font-semibold text-white uppercase tracking-wider">Contact</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <a href="mailto:adithya@yourdomain" class="block hover:text-white transition-colors">Email Us</a>
+            <a href="tel:+14479022546" class="block hover:text-white transition-colors">+1 (447) 902-2546</a>
+            <a href="#" class="block hover:text-white transition-colors">Security</a>
+            <a href="#" class="block hover:text-white transition-colors">Privacy</a>
+          </div>
+        </div>
+        
+        <div class="space-y-4">
+          <h4 class="text-sm font-semibold text-white uppercase tracking-wider">Get Started</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <a href="https://calendly.com/focalllc/focal-demo" class="block hover:text-white transition-colors">Request Demo</a>
+            <a href="mailto:adithya@yourdomain?subject=Enterprise%20Partnership" class="block hover:text-white transition-colors">Enterprise Sales</a>
+            <a href="#" class="block hover:text-white transition-colors">Support</a>
+            <a href="#" class="block hover:text-white transition-colors">Status</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="text-sm text-neutral-500">
+          &copy; <span id="y"></span> Focal Technologies, Inc. All rights reserved.
+        </div>
+        <div class="text-xs text-neutral-600 space-x-4">
+          <span>Early Access</span>
+          <span>•</span>
+          <span>Design Partners</span>
+          <span>•</span>
+          <span>MVP Phase</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // year
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
